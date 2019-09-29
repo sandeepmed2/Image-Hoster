@@ -45,9 +45,12 @@ public class ImageController {
     //Also now you need to add the tags of an image in the Model type object
     //Here a list of tags is added in the Model type object
     //this list is then sent to 'images/image.html' file and the tags are displayed
-    @RequestMapping("/images/{title}")
-    public String showImage(@PathVariable("title") String title, Model model) {
-        Image image = imageService.getImageByTitle(title);
+
+    //Added extra variable in request to map imageId which is now used to get image details from database
+    //getImageByTitle() is replaced with getImageById() to fetch image based on unique imageId rather than image name which can be duplicate and cause error
+    @RequestMapping("/images/{imageId}/{title}")
+    public String showImage(@PathVariable Integer imageId, @PathVariable("title") String title, Model model) {
+        Image image = imageService.getImageById(imageId);
         model.addAttribute("image", image);
         model.addAttribute("tags", image.getTags());
         return "images/image";
@@ -132,7 +135,8 @@ public class ImageController {
         updatedImage.setDate(new Date());
 
         imageService.updateImage(updatedImage);
-        return "redirect:/images/" + updatedImage.getTitle();
+        //Added imageId in the return URL since the corresponding controller method is updated to receive imageId to enable retrieval with a unique key
+        return "redirect:/images/" + updatedImage.getId() + "/" + updatedImage.getTitle();
     }
 
 
