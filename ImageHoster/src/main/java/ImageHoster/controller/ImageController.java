@@ -27,6 +27,9 @@ public class ImageController {
     @Autowired
     private TagService tagService;
 
+    String editError = "Only the owner of the image can edit the image";
+    String deleteError = "Only the owner of the image can delete the image";
+
     //This method displays all the images in the user home page after successful login
     @RequestMapping("images")
     public String getUserImages(Model model) {
@@ -47,12 +50,21 @@ public class ImageController {
     //this list is then sent to 'images/image.html' file and the tags are displayed
 
     //Added extra variable in request to map imageId which is now used to get image details from database
-    //getImageByTitle() is replaced with getImageById() to fetch image based on unique imageId rather than image name which can be duplicate and cause error
+    //getImageByTitle() is replaced with getImage() to fetch image based on unique imageId rather than image name which can be duplicate and cause error
+
+    //This method also checks if current user is owner of the image
+    //If user is not image owner, an error message is added to model to indicate that only owner can edit the image
     @RequestMapping("/images/{imageId}/{title}")
-    public String showImage(@PathVariable Integer imageId, @PathVariable("title") String title, Model model) {
-        Image image = imageService.getImageById(imageId);
+    public String showImage(@PathVariable Integer imageId, @PathVariable("title") String title, Model model, HttpSession session) {
+        Image image = imageService.getImage(imageId);
         model.addAttribute("image", image);
         model.addAttribute("tags", image.getTags());
+
+        User loggedUser = (User)session.getAttribute("loggeduser");
+        if(!imageService.isUserImageOwner(image,loggedUser.getId())){
+            model.addAttribute("editError",editError);
+            model.addAttribute("deleteError",deleteError);
+        }
         return "images/image";
     }
 
