@@ -1,8 +1,10 @@
 package ImageHoster.controller;
 
+import ImageHoster.model.Comment;
 import ImageHoster.model.Image;
 import ImageHoster.model.Tag;
 import ImageHoster.model.User;
+import ImageHoster.service.CommentService;
 import ImageHoster.service.ImageService;
 import ImageHoster.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 
 @Controller
@@ -26,6 +29,9 @@ public class ImageController {
 
     @Autowired
     private TagService tagService;
+
+    @Autowired
+    private CommentService commentService;
 
     String editError = "Only the owner of the image can edit the image";
     String deleteError = "Only the owner of the image can delete the image";
@@ -49,6 +55,10 @@ public class ImageController {
     //Here a list of tags is added in the Model type object
     //this list is then sent to 'images/image.html' file and the tags are displayed
 
+    //Now comments of an image are also added in the Model type object
+    //A list of comments is added in the Model object
+    //This list is then sent to 'images/image.html' file and the comments are displayed
+
     //Added extra variable in request to map imageId which is now used to get image details from database
     //getImageByTitle() is replaced with getImage() to fetch image based on unique imageId rather than image name which can be duplicate and cause error
 
@@ -59,6 +69,7 @@ public class ImageController {
         Image image = imageService.getImage(imageId);
         model.addAttribute("image", image);
         model.addAttribute("tags", image.getTags());
+        model.addAttribute("comments", image.getComments());
 
         User loggedUser = (User)session.getAttribute("loggeduser");
         if(!imageService.isUserImageOwner(image,loggedUser.getId())){
@@ -159,6 +170,35 @@ public class ImageController {
     public String deleteImageSubmit(@RequestParam(name = "imageId") Integer imageId) {
         imageService.deleteImage(imageId);
         return "redirect:/images";
+    }
+
+    //This controller method is called when the request pattern is of type 'images/{imageId}/{imageTitle}/comments' and the incoming request is of POST type
+    //The method receives the imageId, imageTitle, comments along with the Http Session
+    //The method adds new comments to the input image
+    //Set text of the new comment
+    //Set the image by fetching image object through the unique imageId
+    //Set the user using Http Session
+    //Set the date on which the image is posted
+    //Call the uploadComment() method in the business logic to insert the new comment
+    //Direct to the same page showing the details of that particular updated image along with comments
+    @RequestMapping(value = "/image/{imageId}/{imageTitle}/comments", method = RequestMethod.POST)
+    public String uploadImageComments(@PathVariable("imageId") Integer imageId, @PathVariable("imageTitle") String imageTitle, @RequestParam("comment") String commentText, Model model, HttpSession session){
+        Image image = imageService.getImage(imageId);
+        User user = (User)session.getAttribute("loggeduser");
+
+        Comment comment = new Comment();
+        comment.setText(commentText);
+        comment.setImage(image);
+        comment.setUser(user);
+        comment.setCreatedDate(LocalDate.now());
+        comment = commentService.uploadComment(comment);
+
+        //Fetch image again from database before adding to model so that the newly added comment will be also visible when page reloads
+        image = imageService.getImage(imageId);
+        model.addAttribute("image", image);
+        model.addAttribute("tags", image.getTags());
+        model.addAttribute("comments", image.getComments());
+        return "images/image";
     }
 
 
