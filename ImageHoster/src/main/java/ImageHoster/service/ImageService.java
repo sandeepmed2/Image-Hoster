@@ -28,9 +28,11 @@ public class ImageService {
 
     //The method calls the getImage() method in the Repository and passes the id of the image to be fetched
     //Method renamed from getImageByTitle() to getImageById()
-    public Image getImageById(Integer imageId) {
+
+    //Commented below method as part of code refactoring - another service method getImage() already exists for same functionality
+    /*public Image getImageById(Integer imageId) {
         return imageRepository.getImage(imageId);
-    }
+    }*/
 
     //The method calls the getImage() method in the Repository and passes the id of the image to be fetched
     public Image getImage(Integer imageId) {
@@ -45,6 +47,11 @@ public class ImageService {
     //The method calls the deleteImage() method in the Repository and passes the Image id of the image to be deleted in the database
     public void deleteImage(Integer imageId) {
         imageRepository.deleteImage(imageId);
+    }
+
+    //The method compares image owner with logged in user and returns the boolean comparison result
+    public boolean isUserImageOwner(Image image, Integer userId){
+        return image.getUser().getId() == userId;
     }
 
 }
